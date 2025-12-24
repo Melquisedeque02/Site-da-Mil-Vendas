@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+/* 1. CONFIGURAÇÃO CRÍTICA PARA TAILWIND v4:
+   Esta linha permite que o Tailwind entenda a classe ".dark" no seu HTML. 
+   Sem isto, ele ignora os prefixos dark: nos seus componentes. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --brand-blue: #3B82F6;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px;
+    @apply transition-colors duration-500;
+  }
+
+  /* 2. RESET DINÂMICO DO BODY:
+     Definimos as cores base aqui. Se o tema for light, usa bg-white.
+     Se o seletor .dark for detetado no html, usa bg-slate-900.
+  */
+  body {
+    @apply bg-white text-slate-900 dark:bg-slate-900 dark:text-white antialiased transition-colors duration-500;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4 {
+    @apply tracking-tight;
+  }
+}
+
+/* 3. SCROLLBAR ADAPTÁVEL:
+   Usamos as cores que mudam conforme o tema selecionado. */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-50 dark:bg-slate-950;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 dark:bg-slate-700 rounded-full border-2 border-transparent bg-clip-content;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-blue-500;
+}
+
+/* Ajuste para seleção de texto */
+::selection {
+  @apply bg-blue-500 text-white;
+}

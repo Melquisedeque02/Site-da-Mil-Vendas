@@ -1,0 +1,24 @@
+/* Removemos as limitações de largura e centralização do Vite */
+#root {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left; /* Garante que o alinhamento padrão seja à esquerda */
+}
+
+/* Garantimos que o container principal da aplicação 
+   possa crescer e herdar as cores do tema sem restrições.
+*/
+.app-container {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Transição suave global para qualquer mudança de cor */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
