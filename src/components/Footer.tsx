@@ -1,7 +1,7 @@
-// src/components/Footer.tsx - ATUALIZADO com newsletter
+// src/components/Footer.tsx - ATUALIZADO
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Facebook, Instagram, Linkedin, Twitter, Lock, Mail } from 'lucide-react';
+import { Facebook, Instagram, Linkedin, Twitter, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
@@ -45,6 +45,7 @@ const Footer = () => {
               <li><a href="#sobre" className="hover:text-blue-500 transition-colors">Sobre Nós</a></li>
               <li><Link to="/portfolio" className="hover:text-blue-500 transition-colors">Portfólio</Link></li>
               <li><Link to="/events" className="hover:text-blue-500 transition-colors">Eventos</Link></li>
+              <li><Link to="/news" className="hover:text-blue-500 transition-colors">Notícias</Link></li>
               <li><a href="#contacto" className="hover:text-blue-500 transition-colors">Contacto</a></li>
             </ul>
           </div>
@@ -74,16 +75,8 @@ const Footer = () => {
             </form>
             
             <div className="mt-6 pt-6 border-t border-white/10">
-              <Link 
-                to="/auth/login"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-blue-900/30 text-gray-400 hover:text-blue-400 rounded-lg transition-all border border-white/5"
-              >
-                <Lock size={16} />
-                <span className="text-sm">Área Administrativa</span>
-              </Link>
-              <p className="text-xs text-gray-600 mt-2">
-                Acesso restrito à administração do site
-              </p>
+             
+             
             </div>
           </div>
         </div>

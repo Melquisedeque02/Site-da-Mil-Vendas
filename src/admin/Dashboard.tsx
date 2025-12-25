@@ -1,16 +1,35 @@
-// src/admin/Dashboard.tsx - ATUALIZADO
+// src/admin/Dashboard.tsx - ATUALIZADO com modal de detalhes
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart3, Users, Eye, Edit, Bell, Mail, Calendar } from 'lucide-react';
+import { BarChart3, Users, Eye, Edit, Bell, Mail, Calendar, X, User, Phone, Clock, Trash2 } from 'lucide-react';
 import { useNewsletter } from '../context/NewsletterContext';
 
 const Dashboard: React.FC = () => {
   const [previewMode, setPreviewMode] = useState(false);
-  const { subscriptions, unreadCount, markAsRead } = useNewsletter();
+  const [selectedSubscription, setSelectedSubscription] = useState<any | null>(null);
+  const { subscriptions, unreadCount, markAsRead, deleteSubscription } = useNewsletter();
 
-  const handleViewSubscription = (id: string) => {
-    markAsRead(id);
-    alert(`Visualizando inscrição ${id}. Em produção, abriria um modal com detalhes.`);
+  const handleViewSubscription = (subscription: any) => {
+    setSelectedSubscription(subscription);
+    markAsRead(subscription.id);
+  };
+
+  const handleDeleteSubscription = (id: string) => {
+    if (confirm('Tem certeza que deseja excluir esta inscrição?')) {
+      deleteSubscription(id);
+      setSelectedSubscription(null);
+    }
+  };
+
+  const formatDate = (dateString: string | Date) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-AO', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   return (
@@ -96,23 +115,33 @@ const Dashboard: React.FC = () => {
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Inscrições Recentes</h3>
-            <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-sm font-semibold rounded-full">
-              {subscriptions.length} total
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-sm font-semibold rounded-full">
+                {subscriptions.length} total
+              </span>
+              <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-sm font-semibold rounded-full">
+                {unreadCount} não lidas
+              </span>
+            </div>
           </div>
           
           <div className="space-y-4 max-h-80 overflow-y-auto">
-            {subscriptions.slice(0, 5).map((sub) => (
+            {subscriptions.slice(0, 5).map((sub, index) => (
               <div 
                 key={sub.id} 
-                className={`p-4 rounded-xl border transition-all ${sub.read 
-                  ? 'bg-slate-50 dark:bg-slate-900/30 border-slate-200 dark:border-slate-700' 
-                  : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                onClick={() => handleViewSubscription(sub)}
+                className={`p-4 rounded-xl border transition-all cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 ${
+                  sub.read 
+                    ? 'bg-slate-50 dark:bg-slate-900/30 border-slate-200 dark:border-slate-700' 
+                    : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm text-slate-500 dark:text-gray-500 font-mono">
+                        #{index + 1}
+                      </span>
                       <h4 className="font-semibold text-slate-900 dark:text-white">{sub.name || 'Sem nome'}</h4>
                       {!sub.read && (
                         <span className="px-2 py-0.5 bg-blue-500 text-white text-xs font-semibold rounded-full">
@@ -132,13 +161,16 @@ const Dashboard: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-slate-500 dark:text-gray-500">
-                      {new Date(sub.subscribedAt).toLocaleDateString('pt-AO')}
+                      {formatDate(sub.subscribedAt)}
                     </p>
                     <button
-                      onClick={() => handleViewSubscription(sub.id)}
-                      className="mt-2 px-3 py-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-gray-300 text-xs font-semibold rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-all"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewSubscription(sub);
+                      }}
+                      className="mt-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-all"
                     >
-                      Ver
+                      Ver Detalhes
                     </button>
                   </div>
                 </div>
@@ -153,6 +185,120 @@ const Dashboard: React.FC = () => {
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Modal de Detalhes da Inscrição */}
+      {selectedSubscription && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+          >
+            <div className="p-6">
+              {/* Cabeçalho */}
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Detalhes da Inscrição</h3>
+                  <p className="text-slate-600 dark:text-gray-400 text-sm">
+                    {selectedSubscription.read ? 'Visualizada' : 'Nova inscrição'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSelectedSubscription(null)}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all"
+                >
+                  <X size={24} className="text-slate-500 dark:text-gray-400" />
+                </button>
+              </div>
+
+              {/* Informações do Inscrito */}
+              <div className="space-y-6">
+                <div className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl">
+                  <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 dark:text-white mb-1">Informações Pessoais</h4>
+                    <p className="text-slate-700 dark:text-gray-300">
+                      <strong>Nome:</strong> {selectedSubscription.name || 'Não informado'}
+                    </p>
+                    <p className="text-slate-700 dark:text-gray-300">
+                      <strong>Email:</strong> {selectedSubscription.email}
+                    </p>
+                    {selectedSubscription.phone && (
+                      <p className="text-slate-700 dark:text-gray-300">
+                        <strong>Telefone:</strong> {selectedSubscription.phone}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Detalhes do Evento */}
+                {selectedSubscription.event && (
+                  <div className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl">
+                    <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                      <Calendar className="w-6 h-6 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-slate-900 dark:text-white mb-1">Evento</h4>
+                      <p className="text-slate-700 dark:text-gray-300">
+                        {selectedSubscription.event}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Metadados */}
+                <div className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl">
+                  <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                    <Clock className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 dark:text-white mb-1">Informações Técnicas</h4>
+                    <p className="text-slate-700 dark:text-gray-300">
+                      <strong>ID:</strong> {selectedSubscription.id.slice(0, 8)}...
+                    </p>
+                    <p className="text-slate-700 dark:text-gray-300">
+                      <strong>Data:</strong> {formatDate(selectedSubscription.subscribedAt)}
+                    </p>
+                    <p className="text-slate-700 dark:text-gray-300">
+                      <strong>Status:</strong> {selectedSubscription.read ? 'Lida' : 'Não lida'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Ações */}
+                <div className="flex gap-3 pt-6 border-t border-slate-200 dark:border-slate-700">
+                  <button
+                    onClick={() => {
+                      window.open(`mailto:${selectedSubscription.email}?subject=Resposta à sua inscrição`, '_blank');
+                    }}
+                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all"
+                  >
+                    Responder por Email
+                  </button>
+                  <button
+                    onClick={() => handleDeleteSubscription(selectedSubscription.id)}
+                    className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+                  >
+                    <Trash2 size={20} />
+                    Excluir
+                  </button>
+                </div>
+
+                <div className="text-center">
+                  <button
+                    onClick={() => setSelectedSubscription(null)}
+                    className="text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                  >
+                    Fechar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       )}
 
@@ -173,7 +319,7 @@ const Dashboard: React.FC = () => {
           </li>
           <li className="flex items-start gap-2">
             <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-            <span>Novas inscrições aparecerão aqui como notificações</span>
+            <span>Clique nas inscrições para ver detalhes completos</span>
           </li>
         </ul>
       </div>

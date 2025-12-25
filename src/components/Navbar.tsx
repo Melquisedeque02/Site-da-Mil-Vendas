@@ -1,7 +1,7 @@
 // src/components/Navbar.tsx - ATUALIZADO
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sun, Moon, LogIn } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import logoMv from '../assets/logo-mv.svg';
 import { useAppearance } from '../hooks/useAppearance';
@@ -16,6 +16,7 @@ const Navbar = () => {
     { name: 'Sobre', href: '#sobre' },
     { name: 'Portfólio', href: '/portfolio', external: false },
     { name: 'Eventos', href: '/events', external: false },
+    { name: 'Notícias', href: '/news', external: false },
     { name: 'Contacto', href: '#contacto' },
   ];
 
@@ -76,15 +77,6 @@ const Navbar = () => {
               )
             ))}
           </div>
-
-          {/* ÁREA ADMIN */}
-          <Link
-            to="/auth/login"
-            className="flex items-center gap-2 !text-gray-400 hover:!text-white transition-all font-medium text-xs uppercase tracking-[0.2em] group"
-          >
-            <LogIn size={16} />
-            <span>Admin</span>
-          </Link>
 
           {/* TOGGLE BUTTON */}
           <button

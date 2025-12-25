@@ -1,4 +1,4 @@
-// App.tsx - ATUALIZADO com novas páginas
+// src/App.tsx - ATUALIZADO COMPLETO
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -19,6 +19,7 @@ import Services from './pages/Services';
 import Contact from './pages/Contact';
 import Events from './pages/Events';
 import Portfolio from './pages/Portfolio';
+import News from './pages/News';
 
 // Admin components
 import Login from './auth/Login';
@@ -26,6 +27,7 @@ import AdminLayout from './admin/AdminLayout';
 import Dashboard from './admin/Dashboard';
 import EventosPreview from './admin/EventosPreview';
 import PortifolioPreview from './admin/PortifolioPreview';
+import NewsPreview from './admin/NewsPreview';
 import ContactosPreview from './admin/ContactosPreview';
 
 import logoMv from './assets/logo-mv.svg';
@@ -142,6 +144,15 @@ function AppContent() {
                   </>
                 } />
                 
+                <Route path="/news" element={
+                  <>
+                    <Navbar />
+                    <News />
+                    <Footer />
+                    <WhatsappButton />
+                  </>
+                } />
+                
                 {/* Rotas de autenticação */}
                 <Route path="/auth/login" element={<Login />} />
                 
@@ -155,6 +166,7 @@ function AppContent() {
                   <Route path="dashboard" element={<Dashboard />} />
                   <Route path="eventos" element={<EventosPreview />} />
                   <Route path="portifolio" element={<PortifolioPreview />} />
+                  <Route path="noticias" element={<NewsPreview />} />
                   <Route path="contactos" element={<ContactosPreview />} />
                 </Route>
                 

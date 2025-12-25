@@ -1,7 +1,7 @@
-// src/admin/PortifolioPreview.tsx - CORRIGIDO
-import React, { useState, useEffect } from 'react';
+// src/admin/PortifolioPreview.tsx - ATUALIZADO com upload real
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Image, Edit2, Save, Eye, Trash2, Plus, Upload, RefreshCw } from 'lucide-react';
+import { Image, Edit2, Save, Eye, Trash2, Plus, Upload, RefreshCw, X } from 'lucide-react';
 import { useSettings } from '../hooks/useSettings';
 
 interface PortfolioItemType {
@@ -20,6 +20,8 @@ const PortifolioPreview: React.FC = () => {
   const [editMode, setEditMode] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItemType[]>([]);
+  const [uploadingImage, setUploadingImage] = useState<{itemId: number | null, preview: string}>({ itemId: null, preview: '' });
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Carregar itens do sistema de conteúdo
   useEffect(() => {
@@ -39,12 +41,26 @@ const PortifolioPreview: React.FC = () => {
         const techString = settings[`portfolio_${i}_tech`] || 'React,Node.js';
         const technologies = techString.split(',').map((tech: string) => tech.trim()).filter(Boolean);
         
+        // Verificar se a imagem é base64 ou URL
+        let imageUrl = settings[`portfolio_${i}_image`] || 
+          'https://images.unsplash.com/photo-1551650975-87deedd944c3?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
+        
+        // Se for base64, adicionar prefixo
+        if (imageUrl.startsWith('data:image')) {
+          // Já está em formato base64
+        } else if (imageUrl.startsWith('blob:')) {
+          // É uma URL blob (upload recente)
+        } else if (!imageUrl.startsWith('http')) {
+          // É um caminho local
+          imageUrl = `https://images.unsplash.com/photo-1551650975-87deedd944c3?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80`;
+        }
+        
         items.push({
           id: i,
           title: title || 'Sem título',
           description: description || 'Sem descrição',
           category: settings[`portfolio_${i}_category`] || 'Web Development',
-          imageUrl: settings[`portfolio_${i}_image`] || 'https://images.unsplash.com/photo-1551650975-87deedd944c3?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+          imageUrl,
           client: settings[`portfolio_${i}_client`] || 'Cliente',
           year: settings[`portfolio_${i}_year`] || '2024',
           technologies
@@ -102,12 +118,55 @@ const PortifolioPreview: React.FC = () => {
   };
 
   const handleImageUpload = (itemId: number) => {
-    // Em produção, isso faria upload real
-    const imageUrl = prompt('Cole a URL da imagem:');
-    if (imageUrl) {
-      updateSetting(`portfolio_${itemId}_image`, imageUrl);
-      alert('Imagem atualizada!');
+    if (fileInputRef.current) {
+      fileInputRef.current.dataset.itemId = itemId.toString();
+      fileInputRef.current.click();
     }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const itemId = e.target.dataset.itemId ? parseInt(e.target.dataset.itemId) : null;
+
+    if (!file || !itemId) return;
+
+    // Verificar se é imagem
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione apenas arquivos de imagem.');
+      return;
+    }
+
+    // Verificar tamanho (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('A imagem é muito grande. Por favor, selecione uma imagem menor que 5MB.');
+      return;
+    }
+
+    // Criar preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const imageUrl = event.target?.result as string;
+      
+      // Mostrar preview antes de salvar
+      setUploadingImage({ itemId, preview: imageUrl });
+    };
+    reader.readAsDataURL(file);
+
+    // Limpar input
+    e.target.value = '';
+  };
+
+  const confirmImageUpload = () => {
+    if (uploadingImage.itemId && uploadingImage.preview) {
+      updateSetting(`portfolio_${uploadingImage.itemId}_image`, uploadingImage.preview);
+      setUploadingImage({ itemId: null, preview: '' });
+      alert('Imagem atualizada com sucesso!');
+      setTimeout(() => handleSync(), 500);
+    }
+  };
+
+  const cancelImageUpload = () => {
+    setUploadingImage({ itemId: null, preview: '' });
   };
 
   const categories = ['Web Development', 'Mobile App', 'Software', 'Design', 'Consultoria'];
@@ -167,6 +226,64 @@ const PortifolioPreview: React.FC = () => {
         </div>
       )}
 
+      {/* Input de arquivo oculto */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/*"
+        className="hidden"
+      />
+
+      {/* Modal de Preview da Imagem */}
+      {uploadingImage.preview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white dark:bg-slate-800 rounded-3xl max-w-2xl w-full"
+          >
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Pré-visualização da Imagem</h3>
+                <button
+                  onClick={cancelImageUpload}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+                >
+                  <X size={24} className="text-slate-500 dark:text-gray-400" />
+                </button>
+              </div>
+              
+              <div className="mb-6">
+                <img 
+                  src={uploadingImage.preview} 
+                  alt="Preview" 
+                  className="w-full h-64 object-cover rounded-lg"
+                />
+                <p className="text-sm text-slate-600 dark:text-gray-400 mt-2 text-center">
+                  Esta será a nova imagem do projeto
+                </p>
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={confirmImageUpload}
+                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all"
+                >
+                  Confirmar Upload
+                </button>
+                <button
+                  onClick={cancelImageUpload}
+                  className="flex-1 py-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-gray-300 font-semibold rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-all"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       {/* Botão para adicionar novo item */}
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -222,7 +339,9 @@ const PortifolioPreview: React.FC = () => {
                       className="flex items-center gap-2 px-4 py-2 bg-white text-slate-900 font-semibold rounded-lg hover:bg-slate-100 transition-all"
                     >
                       <Upload size={16} />
-                      Alterar Imagem
+                      {item.imageUrl.startsWith('data:image') || item.imageUrl.startsWith('blob:') 
+                        ? 'Alterar Imagem' 
+                        : 'Upload de Imagem'}
                     </button>
                   </div>
                 )}
@@ -346,8 +465,8 @@ const PortifolioPreview: React.FC = () => {
           <div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Controles do Portfólio</h3>
             <p className="text-sm text-slate-600 dark:text-gray-400">
-              <strong>Como funciona:</strong> Os itens são salvos no sistema de conteúdo. 
-              Use "Sincronizar" para ver as mudanças refletidas.
+              <strong>Upload de Imagens:</strong> Clique no botão de upload sobre a imagem do projeto.
+              Suporta JPG, PNG, GIF até 5MB.
             </p>
           </div>
           
@@ -366,12 +485,13 @@ const PortifolioPreview: React.FC = () => {
         </div>
         
         <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
-          <h4 className="font-medium text-slate-700 dark:text-gray-300 mb-2">Dicas:</h4>
+          <h4 className="font-medium text-slate-700 dark:text-gray-300 mb-2">Dicas para Imagens:</h4>
           <ul className="text-sm text-slate-600 dark:text-gray-400 space-y-1">
-            <li>• As mudanças aparecem automaticamente após sincronização</li>
-            <li>• Para upload de imagens, cole URLs de serviços como Unsplash</li>
-            <li>• As tecnologias devem ser separadas por vírgulas</li>
-            <li>• A organização dos itens é mantida automaticamente</li>
+            <li>• Use imagens com proporção 4:3 (recomendado 800×600 pixels)</li>
+            <li>• Formatos suportados: JPG, PNG, GIF, WebP</li>
+            <li>• Tamanho máximo: 5MB por imagem</li>
+            <li>• Para melhor qualidade, otimize as imagens antes do upload</li>
+            <li>• As imagens são armazenadas localmente (base64)</li>
           </ul>
         </div>
       </div>

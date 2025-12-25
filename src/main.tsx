@@ -1,4 +1,4 @@
-// main.tsx - ATUALIZADO
+// src/main.tsx - VERIFICAR se está correto
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
